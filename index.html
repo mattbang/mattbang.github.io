@@ -2,6 +2,131 @@
 <html>
 <body>
 <h1>Hello World</h1>
-<p>I'm hosted with GitHub Pages.</p>
+<p>Assignment: Course Prediction Assignment 
+Course title: Practical Machine Learning by Johns Hopkins University
+Coursera
+
+Author: Matthew Bangle
+Date: Sunday, April 10th, 2016
+
+Setup
+Given a set of human motion data about a particular activity, can the quality of the action be easily predicted?
+The data was recorded as participants perform a bicep curl correctly and incorrectly, exhibiting four common form errors.
+It includes accelerometer information from four inertial measurement units at a rate of 45 Hz. 
+The quality of each motion has been assigned a class of A through E by a knowlegeable observer, depending on the type of error (or lack thereof) in the activity.
+It will be our task to see if we can replace the role of the observer and classify these movements from the sensor data alone.
+
+Approach
+Data Exploration
+The experimental data contains movement data as well as reference information such as the name of the participant, timestamp, and max/mins of certain measurements. An additional time marker has been included in the dataset that breaks down the observations into windows of 2.5s length. This was used by the 
+
+- what I noticed
+The observations are taken at a very high frequency, and many fields are mostly filled with NA. 
+
+
+Preprocessing
+- which variables I chose to preprocess
+I omitted variables that were unlikely to affect the classification of the motion. These were: observation number, participant name, and the unique timestamp of the exercise. This is because I wanted the prediction to be applicable at any date and any username.
+
+
+
+- how I chose to preprocess
+
+- problems
+I ran into an error during early model prediction where only 406 predictions were being made instead of the full 19622. I counted the number non NA fields in a typically NA heavy variable column and found that sum(is.na(train.nt$max_roll_belt)==FALSE) returned a value of 406. This lead me to alter the way I change the na action from omit to .
+
+ 
+-computational time - use knn or handle missing values?
+. When a new sample has a missing predictor value, the bagged model is used to predict the value. While, in theory, this is a more powerful method of imputing, the computational costs are much higher than the nearest neighbor technique.
+
+- benefits, losses
+
+
+Model Fitting
+-method
+which method did we use? "Accuracy and Kappa" for classificiation. Max or min?
+Which method could be better?
+
+-problems
+- 
+
+Aggregating Models
+-
+-
+
+Prediction
+
+
+
+library(caret)
+library(mlbench)
+library(quantmod)
+library(AppliedPredictiveModeling)
+library(caret)
+library(randomForest)
+training <- read.csv("~/Documents/A_Texte/2013-2014 CH/Matt/2015 Fall/ML Johns Hopkins/Project/training.csv", header=TRUE)
+testing <- read.csv("~/Documents/A_Texte/2013-2014 CH/Matt/2015 Fall/ML Johns Hopkins/Project/testing.csv", header=TRUE)
+set.seed(2424)
+
+fitControl <- trainControl(## 10-fold CV
+  method = "repeatedcv",
+  number = 10,
+  ## repeated ten times
+  repeats = 1, classProbs = TRUE, 
+#   resamples = "all", 
+  returnData = TRUE )
+# try to obtain predicted class probabilities within the resampling process
+# resamples plotting the resampling results across multiple tuning parameters
+
+set.seed(825)
+gbmFit1 <- train(classe ~ ., data = training, method = "gbm", trControl = fitControl, verbose = FALSE)
+
+# The tuning parameter grid can be specified by the user. The argument tuneGrid can take a data frame with columns for each tuning parameter. The column names should be the same as the fitting function's arguments. For the previously mentioned RDA example, the names would be gamma and lambda. train will tune the model over each combination of values in the rows.
+# 
+# For the boosted tree model, we can fix the learning rate and evaluate more than three values of n.trees:
+
+gbmGrid <-  expand.grid(interaction.depth = c(1, 5, 9), n.trees = (1:30)*50, shrinkage = 0.1)
+nrow(gbmGrid)
+
+set.seed(825)
+gbmFit2 <- train(Class ~ ., data = training, method = "gbm", trControl = fitControl, verbose = FALSE, tuneGrid = gbmGrid)
+gbmFit2
+
+
+#check test performance
+predict(gbmFit1, newdata = testing)
+predict(gbmFit1, newdata = testing, type = "prob")
+#Updatemodel with additional parameters
+
+# train allows the user to specify alternate rules for selecting the final model. The argument **selectionFunction** can be used to supply a function to algorithmically determine the final model. There are three existing functions in the package: best is chooses the largest/smallest value, ***oneSE** attempts to capture the spirit of Breiman et al (1984) and tolerance selects the least complex model within some percent tolerance of the best value. See ?best for more details.
+
+#make other model fits with shortened data
+# Preprocessing Wrapper
+ppWrapperNOPCA <- function( x, excludeClasses=c("factor"), ... ) {
+  whichToExclude <- sapply( x, function(y) any(sapply(excludeClasses, function(excludeClass) is(y,excludeClass) )) )
+  processedMat <- predict( preProcess( x[!whichToExclude], method = c("center", "scale"), ...), newdata=x[!whichToExclude] )
+  x[!whichToExclude] <- processedMat
+  x
+}
+
+pred.names = names(training)[3:159] #ignoring X, user_name, classe
+pred.names.nt =  names(training)[8:160] #ignoring X, user_name, time
+test.names.nt =  names(training)[8:159] #ignoring X, user_name, classe, time, windows
+
+train.nt <- training[pred.names.nt]
+test.nt <- testing[test.names.nt]
+preprocValues <- ppWrapperNOPCA(train.nt)
+trainTransformed <- predict.preProcess(preprocValues, train.nt)
+testTransformed <- predict.preProcess(preprocValues, test.nt)
+modRPART <- train(classe ~., data=trainTransformed, method="rpart")
+pred1 <- predict(modRPART, newdata = trainTransformed, na.action=na.rpart)
+
+library(rattle);
+library(rpart.plot);
+fancyRpartPlot(modRPARTfinalModel)
+pred.train <- predict(modFitRPnew, newdata = training)
+sum(pred.train == training$classe)/length(training$classe)
+# resample
+/p>
 </body>
 </html>
